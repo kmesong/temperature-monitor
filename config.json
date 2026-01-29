@@ -1,0 +1,15 @@
+{
+    "camera_index": 0,
+    "temperature_threshold": 50.0,
+    "threshold_direction": "above",
+    "alert_cooldown_seconds": 60,
+    "roi": {
+        "x": 200,
+        "y": 150,
+        "width": 150,
+        "height": 80
+    },
+    "ocr_config": "--psm 7 -c tessedit_char_whitelist=0123456789.-°CF",
+    "enable_preview": true,
+    "log_file": "temperature_log.txt"
+}

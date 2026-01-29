@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Temp Monitor Mobile</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Tesseract.js -->
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Temp Monitor</h1>
+            <div class="status-badge" id="statusBadge">Idle</div>
+        </header>
+
+        <div class="camera-container" id="cameraContainer">
+            <video id="videoFeed" autoplay playsinline muted></video>
+            <canvas id="overlayCanvas"></canvas>
+            <div class="roi-box" id="roiBox">
+                <div class="roi-handle roi-handle-tl"></div>
+                <div class="roi-handle roi-handle-tr"></div>
+                <div class="roi-handle roi-handle-bl"></div>
+                <div class="roi-handle roi-handle-br"></div>
+                <div class="roi-label">Scan Area</div>
+            </div>
+            <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+                <div class="spinner"></div>
+                <p>Initializing OCR...</p>
+            </div>
+        </div>
+
+        <div class="controls-container">
+            <div class="readout-panel">
+                <div class="readout-item">
+                    <span class="label">Current</span>
+                    <span class="value" id="currentTemp">--</span>
+                    <span class="unit">°C</span>
+                </div>
+                <div class="readout-item">
+                    <span class="label">Last OCR</span>
+                    <span class="value small" id="rawOcr">--</span>
+                </div>
+            </div>
+
+            <div class="settings-panel">
+                <div class="setting-row">
+                    <label>Threshold (°C)</label>
+                    <div class="stepper">
+                        <button id="btnDec">-</button>
+                        <input type="number" id="thresholdInput" value="50" step="0.5">
+                        <button id="btnInc">+</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>Alert</label>
+                    <select id="directionSelect">
+                        <option value="above">Above</option>
+                        <option value="below">Below</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>Camera</label>
+                    <select id="cameraSelect">
+                        <option value="">Default</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="btnToggle" class="btn-primary">Start Monitoring</button>
+                <button id="btnCalibrate" class="btn-secondary">Adjust ROI</button>
+            </div>
+        </div>
+
+        <div class="logs-container">
+            <h3>History</h3>
+            <ul id="logList"></ul>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

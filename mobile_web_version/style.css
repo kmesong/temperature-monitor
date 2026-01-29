@@ -1,0 +1,279 @@
+:root {
+    --primary-color: #2196F3;
+    --danger-color: #F44336;
+    --success-color: #4CAF50;
+    --bg-color: #121212;
+    --surface-color: #1E1E1E;
+    --text-color: #E0E0E0;
+    --border-radius: 12px;
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 16px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 16px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1 {
+    font-size: 1.25rem;
+    margin: 0;
+    font-weight: 600;
+}
+
+.status-badge {
+    background: #333;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.status-badge.active { background: var(--success-color); color: white; }
+.status-badge.alert { background: var(--danger-color); color: white; animation: pulse 1s infinite; }
+
+.camera-container {
+    position: relative;
+    width: 100%;
+    background: black;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    aspect-ratio: 4/3; /* Typical webcam aspect */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#overlayCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.roi-box {
+    position: absolute;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); /* Dimming outside */
+    width: 50%;
+    height: 30%;
+    top: 35%;
+    left: 25%;
+    touch-action: none; /* Crucial for custom drag */
+    display: none; /* Hidden by default until camera starts */
+}
+
+.roi-label {
+    position: absolute;
+    top: -25px;
+    left: 0;
+    color: var(--primary-color);
+    font-size: 0.8rem;
+    font-weight: bold;
+    background: rgba(0,0,0,0.7);
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+/* ROI Handles for resizing */
+.roi-handle {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: var(--primary-color);
+    border: 2px solid white;
+    border-radius: 50%;
+}
+
+.roi-handle-tl { top: -10px; left: -10px; }
+.roi-handle-tr { top: -10px; right: -10px; }
+.roi-handle-bl { bottom: -10px; left: -10px; }
+.roi-handle-br { bottom: -10px; right: -10px; }
+
+.loading-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+}
+
+.controls-container {
+    background: var(--surface-color);
+    border-radius: var(--border-radius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.readout-panel {
+    display: flex;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.05);
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.readout-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.readout-item .label { font-size: 0.8rem; color: #888; }
+.readout-item .value { font-size: 1.5rem; font-weight: bold; font-family: monospace; }
+.readout-item .unit { font-size: 1rem; color: #aaa; }
+.readout-item .value.small { font-size: 1rem; color: #aaa; }
+
+.settings-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.setting-row label {
+    font-size: 0.9rem;
+}
+
+.stepper {
+    display: flex;
+    align-items: center;
+    background: #333;
+    border-radius: 4px;
+}
+
+.stepper button {
+    background: none;
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.stepper input {
+    width: 50px;
+    background: none;
+    border: none;
+    color: white;
+    text-align: center;
+    font-size: 1rem;
+    -moz-appearance: textfield;
+}
+
+select {
+    background: #333;
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 10px;
+}
+
+button {
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+button:active { opacity: 0.8; }
+
+.btn-primary { background: var(--primary-color); color: white; }
+.btn-secondary { background: #444; color: white; }
+.btn-danger { background: var(--danger-color); color: white; }
+
+.logs-container {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--surface-color);
+    border-radius: var(--border-radius);
+    padding: 16px;
+}
+
+.logs-container h3 {
+    margin-top: 0;
+    font-size: 1rem;
+    margin-bottom: 10px;
+}
+
+#logList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+#logList li {
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+#logList li.alert { color: var(--danger-color); font-weight: bold; }
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
