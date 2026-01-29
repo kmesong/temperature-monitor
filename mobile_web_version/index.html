@@ -25,6 +25,15 @@
                 <div class="roi-handle roi-handle-br"></div>
                 <div class="roi-label">Scan Area</div>
             </div>
+            
+            <!-- New Permission Overlay -->
+            <div class="camera-overlay" id="permissionOverlay">
+                <div class="overlay-content">
+                    <p id="permMsg">Camera access needed for monitoring</p>
+                    <button id="btnGrantPermission" class="btn-primary">Enable Camera</button>
+                </div>
+            </div>
+
             <div class="loading-overlay" id="loadingOverlay" style="display: none;">
                 <div class="spinner"></div>
                 <p>Initializing OCR...</p>

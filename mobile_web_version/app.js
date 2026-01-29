@@ -28,6 +28,9 @@ const rawOcrEl = document.getElementById('rawOcr');
 const logList = document.getElementById('logList');
 const btnToggle = document.getElementById('btnToggle');
 const cameraSelect = document.getElementById('cameraSelect');
+const permissionOverlay = document.getElementById('permissionOverlay');
+const permMsg = document.getElementById('permMsg');
+const btnGrantPermission = document.getElementById('btnGrantPermission');
 
 // Audio Context for alerts
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -55,14 +58,33 @@ function log(msg, type = 'normal') {
     if (logList.children.length > 50) logList.removeChild(logList.lastChild);
 }
 
+// Check for HTTPS/Secure Context
+function checkSecureContext() {
+    if (!window.isSecureContext) {
+        permissionOverlay.style.display = 'flex';
+        permMsg.innerHTML = "⚠️ <strong>Secure Context Required</strong><br>This app needs HTTPS to access the camera.<br>If running locally, use 'localhost', not an IP address.";
+        btnGrantPermission.style.display = 'none';
+        return false;
+    }
+    return true;
+}
+
 // Camera Handling
 async function getCameras() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+        log("Camera API not supported", "alert");
+        return;
+    }
+
     try {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(d => d.kind === 'videoinput');
         
         cameraSelect.innerHTML = '';
+        let hasLabels = false;
+
         videoDevices.forEach((device, index) => {
+            if (device.label) hasLabels = true;
             const option = document.createElement('option');
             option.value = device.deviceId;
             option.text = device.label || `Camera ${index + 1}`;
@@ -74,10 +96,38 @@ async function getCameras() {
         envOption.value = 'environment';
         envOption.text = 'Back Camera (Default)';
         if (videoDevices.length === 0) cameraSelect.appendChild(envOption);
+
+        // If we have devices but no labels, it means we lack permission
+        if (videoDevices.length > 0 && !hasLabels) {
+             permissionOverlay.style.display = 'flex';
+        } else {
+             permissionOverlay.style.display = 'none';
+        }
         
     } catch (e) {
         console.error("Camera enumeration failed", e);
         log("Could not list cameras. Permission denied?", "alert");
+    }
+}
+
+async function requestPermissionAndStart() {
+    try {
+        // Request permission explicitly
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        
+        // Stop it immediately, we just wanted permission
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Now refresh device list (now with labels)
+        await getCameras();
+        
+        // Hide overlay
+        permissionOverlay.style.display = 'none';
+        
+        log("Camera permission granted");
+    } catch (e) {
+        permMsg.textContent = "Permission Denied. Please allow camera access in browser settings.";
+        log("Permission request failed: " + e.message, "alert");
     }
 }
 
@@ -88,7 +138,7 @@ async function startCamera(deviceId = null) {
 
     const constraints = {
         video: {
-            deviceId: deviceId ? { exact: deviceId } : undefined,
+            deviceId: deviceId && deviceId !== 'environment' ? { exact: deviceId } : undefined,
             facingMode: deviceId === 'environment' ? 'environment' : undefined,
             width: { ideal: 1280 },
             height: { ideal: 720 }
@@ -99,9 +149,13 @@ async function startCamera(deviceId = null) {
         state.videoStream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = state.videoStream;
         roiBox.style.display = 'block';
+        permissionOverlay.style.display = 'none'; // Ensure it's hidden if we succeed
         log("Camera started");
     } catch (e) {
         log("Camera failed: " + e.message, "alert");
+        if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+            permissionOverlay.style.display = 'flex';
+        }
     }
 }
 
@@ -395,8 +449,13 @@ cameraSelect.addEventListener('change', () => {
 
 // Initialization
 window.addEventListener('load', async () => {
-    await getCameras();
+    if (checkSecureContext()) {
+        await getCameras();
+    }
     await initOCR();
     initDrag(roiBox);
     initResize(roiBox);
+    
+    // Permission button listener
+    btnGrantPermission.addEventListener('click', requestPermissionAndStart);
 });

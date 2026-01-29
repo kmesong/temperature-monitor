@@ -125,6 +125,28 @@ video {
 .roi-handle-bl { bottom: -10px; left: -10px; }
 .roi-handle-br { bottom: -10px; right: -10px; }
 
+/* Camera Permission Overlay */
+.camera-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+}
+
+.overlay-content {
+    text-align: center;
+    padding: 20px;
+}
+
+.overlay-content p {
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    color: #fff;
+}
+
 .loading-overlay {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
