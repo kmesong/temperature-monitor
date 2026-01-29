@@ -25,6 +25,9 @@
                 <div class="roi-handle roi-handle-br"></div>
                 <div class="roi-label">Scan Area</div>
             </div>
+
+            <!-- Torch Button -->
+            <button id="btnTorch" class="btn-torch">🔦</button>
             
             <!-- New Permission Overlay -->
             <div class="camera-overlay" id="permissionOverlay">
@@ -74,6 +77,27 @@
                     <select id="cameraSelect">
                         <option value="">Default</option>
                     </select>
+                </div>
+            </div>
+
+            <!-- Tuning Controls -->
+            <div class="settings-panel tuning-panel">
+                <div class="setting-row">
+                    <label class="tuning-title">Image Tuning</label>
+                </div>
+                <div class="setting-row">
+                    <label>Binary Threshold</label>
+                    <div class="slider-container">
+                        <input type="range" id="binaryThreshold" min="0" max="255" value="128" class="slider-input">
+                        <span id="thresholdValue" class="slider-value">128</span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>Invert Colors</label>
+                    <input type="checkbox" id="invertColors">
+                </div>
+                <div class="setting-row canvas-row">
+                    <canvas id="debugCanvas" class="debug-canvas"></canvas>
                 </div>
             </div>
 

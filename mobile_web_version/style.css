@@ -343,3 +343,71 @@ button:active { opacity: 0.8; }
         overflow-y: auto;
     }
 }
+
+/* Torch Button (FAB) */
+.btn-torch {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 15;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.btn-torch:active {
+    background: rgba(0, 0, 0, 0.7);
+    transform: scale(0.95);
+}
+
+/* Tuning Controls */
+.tuning-panel {
+    margin-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 10px;
+}
+
+.tuning-title {
+    font-weight: bold;
+    color: #fff;
+}
+
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.slider-input {
+    width: 100px;
+}
+
+.slider-value {
+    min-width: 30px;
+    text-align: right;
+    font-family: monospace;
+}
+
+.canvas-row {
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.debug-canvas {
+    background: #000;
+    border: 1px solid #444;
+    width: 100%;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 4px;
+}

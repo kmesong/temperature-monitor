@@ -1,0 +1,5 @@
+- **HTML Structure**: Added a separate `div` with `settings-panel` class for Tuning controls to maintain logical separation while reusing existing styles.
+- **Inline Styles**: Used inline styles for the Torch button positioning and Debug canvas sizing to avoid modifying `style.css` in this task (adhering to single-file task strictness), though moving these to CSS later would be cleaner.
+- **IDs**: Used `binaryThreshold` and `invertColors` for new inputs to avoid conflict with existing `thresholdInput` (which is for temperature value).
+- **Image Processing**: Implemented manual binarization loop in JavaScript using `getImageData`/`putImageData`. Added logic for dynamic thresholding and color inversion directly in the pixel loop.
+- **Debugging**: Integrated `debugCanvas` to visualize the pre-processed image passed to Tesseract, enabling easier tuning of OCR parameters.

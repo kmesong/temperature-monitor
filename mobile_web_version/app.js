@@ -11,10 +11,15 @@ let state = {
     config: {
         threshold: 50.0,
         direction: 'above',
-        cooldown: 5000 // ms
+        cooldown: 5000, // ms
+        binaryThreshold: 128,
+        invertColors: false
     },
     alertResetTimer: null,
-    isOcrBusy: false
+    isOcrBusy: false,
+    torchMode: 'off', // 'off', 'on', 'pulse'
+    pulseInterval: null,
+    hasTorch: false
 };
 
 // DOM Elements
@@ -27,10 +32,14 @@ const currentTempEl = document.getElementById('currentTemp');
 const rawOcrEl = document.getElementById('rawOcr');
 const logList = document.getElementById('logList');
 const btnToggle = document.getElementById('btnToggle');
+const btnTorch = document.getElementById('btnTorch');
 const cameraSelect = document.getElementById('cameraSelect');
 const permissionOverlay = document.getElementById('permissionOverlay');
 const permMsg = document.getElementById('permMsg');
 const btnGrantPermission = document.getElementById('btnGrantPermission');
+const debugCanvas = document.getElementById('debugCanvas');
+const binaryThresholdInput = document.getElementById('binaryThreshold');
+const invertColorsCheckbox = document.getElementById('invertColors');
 
 // Audio Context for alerts
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -150,6 +159,28 @@ async function startCamera(deviceId = null) {
         video.srcObject = state.videoStream;
         roiBox.style.display = 'block';
         permissionOverlay.style.display = 'none'; // Ensure it's hidden if we succeed
+        
+        // Check for Torch Support
+        const track = state.videoStream.getVideoTracks()[0];
+        try {
+            const capabilities = track.getCapabilities();
+            if (capabilities.torch) {
+                state.hasTorch = true;
+                btnTorch.style.display = 'flex';
+            } else {
+                state.hasTorch = false;
+                btnTorch.style.display = 'none';
+            }
+        } catch (err) {
+            console.warn("Could not check capabilities", err);
+            btnTorch.style.display = 'none';
+        }
+
+        // Reset torch state
+        state.torchMode = 'off';
+        stopPulseMode();
+        updateTorchUI();
+
         log("Camera started");
     } catch (e) {
         log("Camera failed: " + e.message, "alert");
@@ -206,12 +237,22 @@ function processFrame() {
     let data = imageData.data;
     
     // Simple binarization
+    const thresh = state.config.binaryThreshold;
+    const invert = state.config.invertColors;
+
     for (let i = 0; i < data.length; i += 4) {
         let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        let color = avg > 128 ? 255 : 0;
+        let color = avg > thresh ? 255 : 0;
+        if (invert) color = 255 - color;
         data[i] = data[i + 1] = data[i + 2] = color;
     }
     ctx.putImageData(imageData, 0, 0);
+
+    if (debugCanvas) {
+        debugCanvas.width = roiW;
+        debugCanvas.height = roiH;
+        debugCanvas.getContext('2d').putImageData(imageData, 0, 0);
+    }
 
     state.isOcrBusy = true;
 
@@ -230,7 +271,9 @@ function processFrame() {
         .catch(err => console.error(err))
         .finally(() => {
             state.isOcrBusy = false;
-            if (state.running) setTimeout(processFrame, 500); // 2fps limit
+            if (state.running && state.torchMode !== 'pulse') {
+                setTimeout(processFrame, 500); // 2fps limit
+            }
         });
 }
 
@@ -403,7 +446,103 @@ function initResize(box) {
 }
 
 
+// Torch Logic
+async function setTorch(on) {
+    if (!state.videoStream) return;
+    const track = state.videoStream.getVideoTracks()[0];
+    try {
+        await track.applyConstraints({
+            advanced: [{ torch: on }]
+        });
+    } catch (e) {
+        log("Torch failed: " + e.message, "alert");
+    }
+}
+
+function updateTorchUI() {
+    const icons = {
+        'off': '🔦', 
+        'on': '🔦', 
+        'pulse': '⚡'
+    };
+    
+    btnTorch.textContent = icons[state.torchMode];
+    
+    if (state.torchMode === 'on') {
+        btnTorch.style.background = 'rgba(255, 200, 0, 0.8)';
+        btnTorch.style.color = '#000';
+    } else if (state.torchMode === 'pulse') {
+        btnTorch.style.background = 'rgba(0, 150, 255, 0.8)';
+        btnTorch.style.color = '#fff';
+    } else {
+        btnTorch.style.background = 'rgba(0,0,0,0.5)';
+        btnTorch.style.color = 'white';
+    }
+}
+
+function cycleTorchMode() {
+    if (!state.hasTorch) return;
+
+    if (state.torchMode === 'off') {
+        state.torchMode = 'on';
+        setTorch(true);
+        if (state.running && !state.isOcrBusy) processFrame(); 
+    } else if (state.torchMode === 'on') {
+        state.torchMode = 'pulse';
+        setTorch(false); 
+        startPulseMode();
+    } else {
+        state.torchMode = 'off';
+        setTorch(false);
+        stopPulseMode();
+        if (state.running) processFrame();
+    }
+    updateTorchUI();
+}
+
+function startPulseMode() {
+    stopPulseMode();
+    log("Pulse Mode: Active (60s interval)");
+    
+    const runPulse = async () => {
+        if (!state.running || state.torchMode !== 'pulse') return;
+        
+        await setTorch(true);
+        
+        // Wait 1s for exposure
+        setTimeout(async () => {
+            processFrame(); // Capture
+            // Short delay to ensure frame capture uses the light
+            setTimeout(() => setTorch(false), 200);
+        }, 1000); 
+    };
+
+    runPulse(); 
+    state.pulseInterval = setInterval(runPulse, 60000);
+}
+
+function stopPulseMode() {
+    if (state.pulseInterval) {
+        clearInterval(state.pulseInterval);
+        state.pulseInterval = null;
+    }
+}
+
 // Event Listeners
+if (binaryThresholdInput) {
+    binaryThresholdInput.addEventListener('input', (e) => {
+        state.config.binaryThreshold = parseInt(e.target.value, 10);
+    });
+}
+
+if (invertColorsCheckbox) {
+    invertColorsCheckbox.addEventListener('change', (e) => {
+        state.config.invertColors = e.target.checked;
+    });
+}
+
+btnTorch.addEventListener('click', cycleTorchMode);
+
 btnToggle.addEventListener('click', () => {
     state.running = !state.running;
     if (state.running) {

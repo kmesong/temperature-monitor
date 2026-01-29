@@ -23,10 +23,10 @@ Implement responsive landscape layout using CSS Media Queries.
 - Update `mobile_web_version/style.css`
 
 ### Definition of Done
-- [ ] App switches to Split View when device width > height.
-- [ ] Camera takes up left side (majority width).
-- [ ] Controls/Header/Logs stack on the right side.
-- [ ] No elements are overlapping or inaccessible.
+- [x] App switches to Split View when device width > height.
+- [x] Camera takes up left side (majority width).
+- [x] Controls/Header/Logs stack on the right side.
+- [x] No elements are overlapping or inaccessible.
 
 ### Must Have
 - `@media (orientation: landscape)`
@@ -62,10 +62,10 @@ Implement responsive landscape layout using CSS Media Queries.
     - `.logs-container`: `grid-column: 2`, `grid-row: 3`, `overflow-y: auto`
 
   **Verification**:
-  - [ ] Open `mobile_web_version/index.html` in browser.
-  - [ ] Toggle Device Toolbar (Ctrl+Shift+M).
-  - [ ] Rotate to landscape.
-  - [ ] Verify Split View layout appears.
+  - [x] Open `mobile_web_version/index.html` in browser.
+  - [x] Toggle Device Toolbar (Ctrl+Shift+M).
+  - [x] Rotate to landscape.
+  - [x] Verify Split View layout appears.
 
   **References**:
   - `mobile_web_version/style.css` (existing styles to override)
@@ -73,6 +73,6 @@ Implement responsive landscape layout using CSS Media Queries.
 ---
 
 ## Success Criteria
-- [ ] Camera feed is maximized on the left.
-- [ ] Controls are easily accessible on the right.
-- [ ] Layout breaks gracefully back to column on portrait.
+- [x] Camera feed is maximized on the left.
+- [x] Controls are easily accessible on the right.
+- [x] Layout breaks gracefully back to column on portrait.
