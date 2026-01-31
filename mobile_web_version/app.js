@@ -190,23 +190,8 @@ async function startCamera(deviceId = null) {
     }
 }
 
-// Tesseract Initialization
-async function initOCR() {
-    document.getElementById('loadingOverlay').style.display = 'flex';
-    try {
-        state.worker = await Tesseract.createWorker('eng');
-        await state.worker.setParameters({
-            tessedit_char_whitelist: '0123456789.-°CF',
-            tessjs_create_hocr: '0',
-            tessjs_create_tsv: '0',
-        });
-        log("OCR Engine Ready");
-    } catch (e) {
-        log("OCR Init Failed: " + e.message, "alert");
-    } finally {
-        document.getElementById('loadingOverlay').style.display = 'none';
-    }
-}
+// OCR Init removed (replaced by synchronous ocr.js)
+
 
 // Image Processing & OCR
 function processFrame() {
@@ -256,25 +241,41 @@ function processFrame() {
 
     state.isOcrBusy = true;
 
-    state.worker.recognize(canvas)
-        .then(({ data: { text } }) => {
-            const cleanText = text.trim();
-            rawOcrEl.textContent = cleanText || "--";
+    // Synchronous OCR (Fast)
+    try {
+        const { text, blobs } = OCR.recognize(imageData);
+        
+        // Debug Visualization
+        if (debugCanvas) {
+            const dCtx = debugCanvas.getContext('2d');
+            dCtx.putImageData(imageData, 0, 0);
             
-            // Extract number
-            const matches = cleanText.match(/-?\d+\.?\d*/);
-            if (matches) {
-                const temp = parseFloat(matches[0]);
-                updateTemp(temp);
-            }
-        })
-        .catch(err => console.error(err))
-        .finally(() => {
-            state.isOcrBusy = false;
-            if (state.running && state.torchMode !== 'pulse') {
-                setTimeout(processFrame, 500); // 2fps limit
-            }
-        });
+            dCtx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+            dCtx.lineWidth = 1;
+            blobs.forEach(b => dCtx.strokeRect(b.x, b.y, b.w, b.h));
+        }
+
+        const cleanText = text.trim();
+        rawOcrEl.textContent = cleanText || "--";
+        
+        // Extract number
+        // Support common OCR glitches like 'S' for '5' if we had them, 
+        // but 7-segment logic is deterministic.
+        const matches = cleanText.match(/-?\d+\.?\d*/);
+        if (matches) {
+            const temp = parseFloat(matches[0]);
+            // Filter crazy values (optional)
+            if (!isNaN(temp)) updateTemp(temp);
+        }
+    } catch (e) {
+        console.error("OCR Error", e);
+    }
+
+    state.isOcrBusy = false;
+    
+    if (state.running && state.torchMode !== 'pulse') {
+        requestAnimationFrame(processFrame);
+    }
 }
 
 function updateTemp(temp) {
@@ -591,7 +592,7 @@ window.addEventListener('load', async () => {
     if (checkSecureContext()) {
         await getCameras();
     }
-    await initOCR();
+    // initOCR() removed
     initDrag(roiBox);
     initResize(roiBox);
     
